@@ -4,6 +4,7 @@ on:
   push:
     paths: 
       - episode.json
+      - .github/worflow/upload.yml
     branches: [main]
 
 jobs:

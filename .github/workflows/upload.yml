@@ -13,8 +13,10 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Upload Episode from YouTube To Anchor.Fm
-        uses: weltonrodrigo/youtube-to-anchorfm@master
+        uses: weltonrodrigo/youtube-to-anchorfm@new-anchor
         env:
           ANCHOR_EMAIL: ${{ secrets.ANCHOR_EMAIL }}
           ANCHOR_PASSWORD: ${{ secrets.ANCHOR_PASSWORD }}
           EPISODE_PATH: /github/workspace
+          POSTPROCESSOR_ARGS: "ffmpeg:ac -1"
+          SAVE_AS_DRAFT: true

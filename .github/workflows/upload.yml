@@ -1,11 +1,6 @@
 name: 'Upload Episode from YouTube To Anchor.Fm'
 
-on:
-  push:
-    # paths: 
-    #   - episode.json
-    #   - .github/worflows/upload.yml
-    branches: [main]
+on: push
 
 jobs:
   upload_episode:

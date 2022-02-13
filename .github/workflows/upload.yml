@@ -20,5 +20,3 @@ jobs:
           EPISODE_PATH: /github/workspace
           POSTPROCESSOR_ARGS: "ffmpeg:-ac 1"
           SAVE_AS_DRAFT: true
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3

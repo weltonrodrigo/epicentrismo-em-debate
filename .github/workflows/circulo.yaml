@@ -1,0 +1,22 @@
+name: 'Círculo Mentalsomático'
+
+on:
+  push:
+    paths: 
+      - circulo.json
+    branches: [main]
+
+jobs:
+  upload_episode:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Upload Episode from YouTube To Anchor.Fm
+        uses: weltonrodrigo/youtube-to-anchorfm@multi-show
+        env:
+          ANCHOR_EMAIL: ${{ secrets.ANCHOR_EMAIL_CIRCULO }}
+          ANCHOR_PASSWORD: ${{ secrets.ANCHOR_PASSWORD_CIRCULO }}
+          EPISODE_PATH: /github/workspace/
+          EPISODE_CONFIG: circulo.json
+          POSTPROCESSOR_ARGS: "ffmpeg:-ac 1 -af silenceremove=1:0:-50dB"
+          SAVE_AS_DRAFT: true

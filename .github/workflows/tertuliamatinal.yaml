@@ -16,7 +16,7 @@ jobs:
         env:
           ANCHOR_EMAIL: ${{ secrets.ANCHOR_EMAIL_TERTULIAMATINAL }}
           ANCHOR_PASSWORD: ${{ secrets.ANCHOR_PASSWORD_TERTULIAMATINAL }}
-          EPISODE_PATH: /github/workspace
+          EPISODE_PATH: /github/workspace/
           EPISODE_CONFIG: tertuliamatinal.json
           POSTPROCESSOR_ARGS: "ffmpeg:-ac 1 -af silenceremove=1:0:-50dB"
           SAVE_AS_DRAFT: true

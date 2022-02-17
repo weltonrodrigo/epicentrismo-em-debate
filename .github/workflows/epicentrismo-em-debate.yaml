@@ -17,5 +17,6 @@ jobs:
           ANCHOR_EMAIL: ${{ secrets.ANCHOR_EMAIL }}
           ANCHOR_PASSWORD: ${{ secrets.ANCHOR_PASSWORD }}
           EPISODE_PATH: /github/workspace
+          EPISODE_CONFIG: epicentrismo.json
           POSTPROCESSOR_ARGS: "ffmpeg:-ac 1"
           SAVE_AS_DRAFT: true

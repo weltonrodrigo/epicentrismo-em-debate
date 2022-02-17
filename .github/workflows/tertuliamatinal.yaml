@@ -1,4 +1,4 @@
-name: 'Upload Episode from YouTube To Anchor.Fm'
+name: 'Tertúlia Matinal'
 
 on:
   push:

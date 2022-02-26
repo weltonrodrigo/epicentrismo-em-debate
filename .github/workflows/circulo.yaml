@@ -9,11 +9,11 @@ on:
 jobs:
   upload_episode:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v2
       - name: Upload Episode from YouTube To Anchor.Fm
         uses: weltonrodrigo/youtube-to-anchorfm@multi-show
+        timeout-minutes: 10
         env:
           ANCHOR_EMAIL: ${{ secrets.ANCHOR_EMAIL_CIRCULO }}
           ANCHOR_PASSWORD: ${{ secrets.ANCHOR_PASSWORD_CIRCULO }}

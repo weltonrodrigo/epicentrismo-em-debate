@@ -12,7 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Upload Episode from YouTube To Anchor.Fm
-        uses: weltonrodrigo/youtube-to-anchorfm@episode_path
+        uses: quay.io/weltonrodrigo/youtube-to-anchorrm:episode_path
         timeout-minutes: 10
         env:
           ANCHOR_EMAIL: ${{ secrets.ANCHOR_EMAIL_CIRCULO }}

@@ -21,6 +21,8 @@ jobs:
           EPISODE_CONFIG: circulo.json
           POSTPROCESSOR_ARGS: "ffmpeg:-ac 1 -af silenceremove=1:0:-50dB"
           SAVE_AS_DRAFT: true
+          SET_PUBLISH_DATE: true
+          URL_IN_DESCRIPTION: true
       - name: Archive screenshot on errors
         uses: actions/upload-artifact@v2
         with:

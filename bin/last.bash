@@ -1,5 +1,6 @@
-#!/usr/local/bin/env
+#!/usr/bin/env bash
 #
+
 
 function last {
     url=$1

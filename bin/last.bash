@@ -59,6 +59,13 @@ for i in "${!urls[@]}"; do
     if [ "$found" -eq 0 ]; then
         echo "Mismatch: $podcast_title $video_title"
         echo "{\"id\": \"$(echo ${oldest_video} | awk '{print $NF}')}" > "${podcast_names[$i]}.json"
+        
+        # check if --open argument is provided to the script
+        if [[ $1 == "--open" ]]; then
+            video_id=$(echo $oldest_video | awk '{print $NF}')
+            # use `open` command to open the video in the browser
+            open "https://www.youtube.com/watch?v=${video_id}"
+        fi
     fi
 
 done

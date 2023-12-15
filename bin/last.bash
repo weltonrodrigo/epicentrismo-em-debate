@@ -1,15 +1,35 @@
 #!/bin/bash
 
-function last {
-    url=$1
-    title=$(curl -s $url | ack -oP '(?<=<title><!\[CDATA\[).*(?=\]\]></title>)' | sed -n 2p)
-    echo "$title"
+function fetch_videos_from_rss(){
+  local rss_feed_url=$1
+
+  # Parse the RSS feed and extract YouTube URLs. deduplicating, as they appear twice for each item
+  local youtube_video_ids=($(curl -s "$rss_feed_url" | ggrep -oP 'https://www.youtube.com/watch\?v=\K[^&<"]+' | uniq ) )
+
+  echo "${youtube_video_ids[*]}"
 }
 
-function videos {
-    url=$1
-    data=$(youtube-dl --dump-json --dateafter now-7day --playlist-end 2 "$url" | jq '. | "\(.title) \(.id)"' |tac )
-    echo "$data"
+function fetch_videos_from_playlist(){
+  local playlist_url=$1
+  local playlist_video_ids=($(youtube-dl --get-id --playlist-end 5 "$playlist_url" | tac))
+  echo "${playlist_video_ids[*]}"
+}
+
+function submit_for_conversion(){
+  local filename=$1
+  local video_id=$2
+  local date=$(date +%Y%m%d%H%M%S) # Format date as YYYYMMDDHHMMSS
+
+  # Ask for user confirmation before submitting
+  echo "Submit video ID ${video_id} for conversion? (y/n)"
+  read -r confirm
+  if [[ $confirm == [yY] ]]; then
+    echo "{\"id\": \"${video_id}\"}" > "${filename}"
+    git add "${filename}" && git commit -m "Add ${filename} for conversion - ${date}" && git push
+    echo "Video ID ${video_id} submitted for conversion."
+  else
+    echo "Video ID ${video_id} not submitted."
+  fi
 }
 
 declare -a urls=(
@@ -30,42 +50,27 @@ declare -a podcast_names=(
     'circulo'
 )
 
+
 for i in "${!urls[@]}"; do
-    podcast_title=$(last "${urls[$i]}")
-    video_data=$(videos "${playlists[$i]}")
-    IFS=$'\n' read -d '' -a video_list <<< "${video_data}"
+  # set -x
+    # Assuming these variables are set to the correct URLs for the YouTube playlist and RSS feed:
+    playlist_url="${playlists[$i]}"
+    rss_url="${urls[$i]}"
+    podcast_title="${podcast_names[$i]}"
 
-    echo $video_data
+    # This is a placeholder for the function that fetches video IDs from the playlist and RSS feed.
+    # Replace these with the actual calls that fetch video IDs.
+    videos_in_rss=( $(fetch_videos_from_rss "$rss_url") )
+    videos_in_playlist=( $(fetch_videos_from_playlist "$playlist_url") )
 
-    found=0
-    oldest_video=""
-    for video in "${video_list[@]}"; do
-        video_id=$(echo $video | awk '{print $NF}')
-        video_title=$(echo $video | awk '{$NF=""; print $0}')
-
-        # echo $video $video_id $video_title
-
-        if [ "$podcast_title" == "$video_title" ]; then
-            found=1
-            echo "Match: $podcast_title == $video_title"
-            break
-        else
-            if [ -z "$oldest_video" ]; then
-                oldest_video=$video
-            fi
+    # The function should compare and find the differences.
+    videos_to_convert=()
+    for video_id in "${videos_in_playlist[@]}"; do
+      if ! [[ " ${videos_in_rss[*]} " =~ " ${video_id} " ]]; then
+        if [[ $1 == "--check" ]]; then
+          open "https://www.youtube.com/watch?v=${video_id}"
         fi
+        submit_for_conversion "${podcast_title}.json" "${video_id}"
+      fi
     done
-
-    if [ "$found" -eq 0 ]; then
-        echo "Mismatch: $podcast_title $video_title"
-        echo "{\"id\": \"$(echo ${oldest_video} | awk '{print $NF}')}" > "${podcast_names[$i]}.json"
-        
-        # check if --open argument is provided to the script
-        if [[ $1 == "--open" ]]; then
-            video_id=$(echo $oldest_video | awk '{print $NF}')
-            # use `open` command to open the video in the browser
-            open "https://www.youtube.com/watch?v=${video_id}"
-        fi
-    fi
-
 done

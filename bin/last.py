@@ -4,6 +4,7 @@ import requests
 import subprocess
 import re
 import sys
+import os
 import webbrowser
 from datetime import datetime
 
@@ -52,19 +53,28 @@ def fetch_videos_from_playlist(playlist_url):
 
 
 def submit_for_conversion(filename, video_id, video_title):
+    # Construct the path to the parent directory
+    parent_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+    # Construct the full path for the filename in the parent directory
+    full_path = os.path.join(parent_dir, filename)
+    
     date = datetime.now().strftime('%Y%m%d%H%M%S')
     print(f"Preparing to submit video ID {video_id} with title '{video_title}' for conversion.")
     confirm = 'y' if '--no-check' in sys.argv else input(f"Submit video ID {video_id} with title '{video_title}' for conversion? (y/n): ")
     if confirm.lower() == 'y':
-        with open(filename, 'w') as file:
+        with open(full_path, 'w') as file:  # Use full_path instead of filename
             file.write(f'{{"id": "{video_id}", "title": "{video_title}"}}')
-        subprocess.run(['git', 'add', filename], check=True)
+
+        # Run Git commands from the parent directory
+        subprocess.run(['git', 'add', full_path], cwd=parent_dir, check=True)
         commit_message = f"Add {filename} for conversion: {video_title} - {date}"
-        subprocess.run(['git', 'commit', '-m', commit_message], check=True)
-        subprocess.run(['git', 'push'], check=True)
+        subprocess.run(['git', 'commit', '-m', commit_message], cwd=parent_dir, check=True)
+        subprocess.run(['git', 'push'], cwd=parent_dir, check=True)
+        
         print(f"Video ID {video_id} with title '{video_title}' submitted for conversion.")
     else:
         print(f"Submission for video ID {video_id} with title '{video_title}' cancelled by user.")
+
 
 def main():
     urls = [

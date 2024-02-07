@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from collections import defaultdict
 import logging
 import requests
 import subprocess
@@ -7,6 +8,7 @@ import sys
 import os
 import webbrowser
 from datetime import datetime
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 
 def fetch_videos_from_rss(rss_feed_url):
@@ -95,19 +97,42 @@ def main():
         'circulo',
     ]
 
-    for i, (rss_url, playlist_url, podcast_title) in enumerate(zip(urls, playlists, podcast_names)):
-        try:
-            videos_in_rss = fetch_videos_from_rss(rss_url)
-            videos_in_playlist = fetch_videos_from_playlist(playlist_url)
-            videos_to_convert = [(video_id, video_title) for video_title, video_id in videos_in_playlist if video_id not in videos_in_rss]
+    with ThreadPoolExecutor() as executor:
+        # Create a list to store all future objects
+        future_to_url = {}
+        for i, (rss_url, playlist_url, podcast_title) in enumerate(zip(urls, playlists, podcast_names)):
+            # Schedule the fetch_videos_from_rss and fetch_videos_from_playlist to run in parallel
+            future_rss = executor.submit(fetch_videos_from_rss, rss_url)
+            future_playlist = executor.submit(fetch_videos_from_playlist, playlist_url)
+            future_to_url[future_rss] = (i, 'rss', podcast_title)
+            future_to_url[future_playlist] = (i, 'playlist', podcast_title)
 
-            for video_id, video_title in videos_to_convert:
-                if '--no-check' not in sys.argv:
-                    print(f"Checking video: https://www.youtube.com/watch?v={video_id}")
-                    webbrowser.open(f"https://www.youtube.com/watch?v={video_id}")
-                submit_for_conversion(f"{podcast_title}.json", video_id, video_title)
-        except Exception as e:
-            logging.error(f"An error occurred while processing playlist {playlist_url}: {e}")
+
+        results = defaultdict(dict)
+        # Process results as they are completed
+        for future in as_completed(future_to_url):
+            i, job_type, podcast_title = future_to_url[future]
+            try:
+                data = future.result()
+                results[podcast_title][job_type] = data
+            except Exception as e:
+                logging.error(f"An error occurred while processing podcast {podcast_title}: {e}")
+
+        for podcast_title, result in results.items():
+            videos_in_rss = result['rss']
+            videos_in_playlist = result['playlist']
+
+            videos_to_convert = [(video_id, video_title) for video_title, video_id in videos_in_playlist if video_id not in videos_in_rss]
+            
+            try:
+                for video_id, video_title in videos_to_convert:
+                    if '--no-check' not in sys.argv:
+                        print(f"Checking video: https://www.youtube.com/watch?v={video_id}")
+                        webbrowser.open(f"https://www.youtube.com/watch?v={video_id}")
+                    submit_for_conversion(f"{podcast_title}.json", video_id, video_title)
+            except Exception as e:
+                playlist_url = playlists[future_to_url[future][0]]
+                logging.error(f"An error occurred while processing playlist {playlist_url}: {e}")
 
 
 

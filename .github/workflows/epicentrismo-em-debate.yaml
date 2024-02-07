@@ -20,6 +20,6 @@ jobs:
           EPISODE_PATH: /github/workspace/
           EPISODE_FILE: epicentrismo.json
           POSTPROCESSOR_ARGS: "ExtractAudio+ffmpeg:-ac 1 -af silenceremove=1:0:-50dB,afade=t=in:d=5"
-          SAVE_AS_DRAFT: false
+          SAVE_AS_DRAFT: true
           SET_PUBLISH_DATE: true
           URL_IN_DESCRIPTION: true

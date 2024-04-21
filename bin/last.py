@@ -20,9 +20,14 @@ def fetch_videos_from_rss(rss_feed_url):
     return youtube_video_ids
 
 
+def parse_duration(duration_str):
+    parts = list(map(int, duration_str.split(':')))
+    return parts[0] * 3600 + parts[1] * 60 + parts[2]  # Convert to seconds
+
+
 def fetch_videos_from_playlist(playlist_url):
     print(f"Fetching videos from playlist: {playlist_url}")
-    command = ['yt-dlp', '--get-id', '--get-title', '--playlist-end', '5', playlist_url]
+    command = ['yt-dlp', '--get-id', '--get-title', '--get-duration', '--playlist-end', '5', playlist_url]
     try:
         # Capture STDOUT and STDERR separately
         process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -44,12 +49,16 @@ def fetch_videos_from_playlist(playlist_url):
     # Process the output to extract video information
     lines = output.strip().split('\n')
     # Ensure an even number of lines for zipping IDs with titles
-    if len(lines) % 2 != 0:
+    if len(lines) % 3 != 0:
         logging.error("The output from yt-dlp did not return an even number of lines for IDs and titles.")
         return []
     
-    playlist_video_info = list(zip(lines[::2], lines[1::2]))  # Pair IDs with titles correctly
+    playlist_video_info = []
+    for i in range(0, len(lines), 3):
+        video_id, video_title, duration = lines[i], lines[i+1], lines[i+2]
+        playlist_video_info.append((video_id, video_title, duration))
     playlist_video_info.reverse()
+
     print(f"Found {len(playlist_video_info)} video(s) in playlist.")
     return playlist_video_info
 
@@ -122,10 +131,16 @@ def main():
             videos_in_rss = result['rss']
             videos_in_playlist = result['playlist']
 
-            videos_to_convert = [(video_id, video_title) for video_title, video_id in videos_in_playlist if video_id not in videos_in_rss]
+            videos_to_convert = [
+                (video_id, video_title, video_duration) 
+                for video_title, video_id, video_duration in videos_in_playlist if video_id not in videos_in_rss
+                ]
             
             try:
-                for video_id, video_title in videos_to_convert:
+                for video_id, video_title, video_duration in videos_to_convert:
+                    if parse_duration(video_duration) > 7200:
+                        logging.info(f"Video {video_id} tem mais de 2h, ignorando")
+                        continue
                     if '--no-check' not in sys.argv:
                         print(f"Checking video: https://www.youtube.com/watch?v={video_id}")
                         webbrowser.open(f"https://www.youtube.com/watch?v={video_id}")

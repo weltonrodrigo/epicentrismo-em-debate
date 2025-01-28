@@ -9,10 +9,15 @@ import os
 import webbrowser
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from diskcache import Cache
+import time
+
+cache = Cache('last_videos_cache')
 
 LAST_VIDEOS_TO_CHECK = 45
 
 
+@cache.memoize(expire=3600)
 def fetch_videos_from_rss(rss_feed_url):
     print(f"Fetching videos from RSS feed: {rss_feed_url}")
     response = requests.get(rss_feed_url)
@@ -27,6 +32,7 @@ def parse_duration(duration_str):
     return parts[0] * 3600 + parts[1] * 60 + parts[2]  # Convert to seconds
 
 
+@cache.memoize(expire=3600)
 def fetch_videos_from_playlist(playlist_url):
     print(f"Fetching videos from playlist: {playlist_url}")
     command = ['yt-dlp', '--get-id', '--get-title', '--get-duration', '--playlist-end', str(LAST_VIDEOS_TO_CHECK), playlist_url]

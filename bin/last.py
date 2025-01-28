@@ -10,6 +10,8 @@ import webbrowser
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
+LAST_VIDEOS_TO_CHECK = 45
+
 
 def fetch_videos_from_rss(rss_feed_url):
     print(f"Fetching videos from RSS feed: {rss_feed_url}")
@@ -27,7 +29,7 @@ def parse_duration(duration_str):
 
 def fetch_videos_from_playlist(playlist_url):
     print(f"Fetching videos from playlist: {playlist_url}")
-    command = ['yt-dlp', '--get-id', '--get-title', '--get-duration', '--playlist-end', '5', playlist_url]
+    command = ['yt-dlp', '--get-id', '--get-title', '--get-duration', '--playlist-end', str(LAST_VIDEOS_TO_CHECK), playlist_url]
     try:
         # Capture STDOUT and STDERR separately
         process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -125,7 +127,7 @@ def main():
                 data = future.result()
                 results[podcast_title][job_type] = data
             except Exception as e:
-                logging.error(f"An error occurred while processing podcast {podcast_title}: {e}")
+                logging.error(f"An error occurred while processing podcast {podcast_title}", e)
 
         for podcast_title, result in results.items():
             videos_in_rss = result['rss']
